@@ -23,7 +23,7 @@ def setup_driver(headless=True):
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("--window-size=1280,4000")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -50,41 +50,7 @@ def wait_for_element(driver, by, value, timeout=10):
     except Exception as e:
         logger.error(f"Timeout esperando pelo elemento {value}: {str(e)}")
         return None
-
-def scroll_page(driver, scroll_pause_time=2, max_scrolls=30):
-    """
-    Rola a página para baixo para carregar todos os elementos
-    """
-    logger.info("Iniciando rolagem da página...")
     
-    # Obter altura inicial da página
-    last_height = driver.execute_script("return document.body.scrollHeight")
-    scroll_count = 0
-    
-    while scroll_count < max_scrolls:
-        # Rolar para o final da página
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        
-        # Aguardar o carregamento
-        time.sleep(scroll_pause_time)
-        
-        # Calcular nova altura e comparar com a última altura
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            # Se a altura não mudou, não há mais conteúdo para carregar
-            logger.info("Página rolada até o final")
-            break
-            
-        last_height = new_height
-        scroll_count += 1
-        logger.info(f"Rolagem {scroll_count} concluída")
-    
-    # Voltar ao topo da página
-    driver.execute_script("window.scrollTo(0, 0);")
-    logger.info("Retornando ao topo da página")
-    
-    # Aguardar um pouco para garantir que a página esteja estável
-    time.sleep(3)
 
 def save_to_csv(resultados, filename=None):
     """
@@ -92,6 +58,17 @@ def save_to_csv(resultados, filename=None):
     """
     if not resultados:
         logger.warning("Nenhum resultado para salvar")
+        return
+    
+    # Filtrar linhas vazias ou com valores vazios
+    resultados_filtrados = []
+    for resultado in resultados:
+        # Verificar se todos os valores são não vazios
+        if all(resultado.values()):
+            resultados_filtrados.append(resultado)
+    
+    if not resultados_filtrados:
+        logger.warning("Nenhum resultado válido para salvar após filtrar linhas vazias")
         return
     
     if filename is None:
@@ -105,7 +82,7 @@ def save_to_csv(resultados, filename=None):
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             
             writer.writeheader()
-            for resultado in resultados:
+            for resultado in resultados_filtrados:
                 writer.writerow(resultado)
             
             logger.info(f"Resultados salvos em {filename}")
@@ -131,7 +108,6 @@ def scrape_betano(headless=True, save_csv=True):
         logger.info(f"Título da página: {driver.title}")
         
         # Rolar a página para carregar todos os elementos
-        scroll_page(driver)
         
         # Aguardar um pouco mais para garantir que todos os elementos estejam carregados
         time.sleep(5)

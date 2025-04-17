@@ -2,3 +2,27 @@ requests==2.31.0
 beautifulsoup4==4.12.3
 selenium==4.18.1
 webdriver-manager==4.0.1 
+
+
+#!/bin/bash
+# This script runs on instance startup
+
+
+
+
+# Log script execution (helpful for debugging)
+exec > >(tee /var/log/user-data.log) 2>&1
+echo "Starting user data script execution at $(date)"
+
+# Wait for any initialization to complete
+sleep 30
+
+# Activate your virtual environment
+source mlb-strikeout-predictor/venv/bin/activate
+
+sleep 5
+# Run your Python script
+
+python3 mlb-strikeout-predictor/src/main.py 
+
+echo "User data script completed at $(date)"
